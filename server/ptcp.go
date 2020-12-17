@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/xitongsys/pangolin/config"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/protocol"
-	"github.com/xitongsys/pangolin/util"
+	"github.com/gitcfly/tunnet/config"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/protocol"
+	"github.com/gitcfly/tunnet/util"
 	"github.com/xitongsys/ptcp/ptcp"
 )
 

@@ -5,9 +5,9 @@ import (
 	"net"
 	"sync"
 
-	"github.com/xitongsys/pangolin/config"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/tun"
+	"github.com/gitcfly/tunnet/config"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/tun"
 )
 
 //todo: add sync.Mutx for Users change
@@ -23,7 +23,7 @@ type LoginManager struct {
 }
 
 func NewLoginManager(cfg *config.Config) (*LoginManager, error) {
-	tunServer, err := tun.NewTunServer(cfg.TunName, cfg.Mtu)
+	tunServer, err := tun.NewTunServer(cfg.TunName, cfg.Tun, cfg.Mtu)
 	if err != nil {
 		return nil, err
 	}

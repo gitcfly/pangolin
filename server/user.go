@@ -3,11 +3,11 @@ package server
 import (
 	"net"
 
+	"github.com/gitcfly/tunnet/encrypt"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/protocol"
+	"github.com/gitcfly/tunnet/util"
 	"github.com/xitongsys/ethernet-go/header"
-	"github.com/xitongsys/pangolin/encrypt"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/protocol"
-	"github.com/xitongsys/pangolin/util"
 )
 
 var USERCHANBUFFERSIZE = 1024

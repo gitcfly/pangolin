@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/gitcfly/tunnet/config"
+	"github.com/gitcfly/tunnet/encrypt"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/tun"
+	"github.com/gitcfly/tunnet/util"
 	"github.com/xitongsys/ethernet-go/header"
-	"github.com/xitongsys/pangolin/config"
-	"github.com/xitongsys/pangolin/encrypt"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/tun"
-	"github.com/xitongsys/pangolin/util"
 )
 
 type TcpClient struct {
 	ServerAdd string
 	Cfg       *config.Config
 	TcpConn   *net.TCPConn
-	TunConn   tun.Tun
+	TunConn   *tun.Tun
 }
 
 func NewTcpClient(cfg *config.Config) (*TcpClient, error) {
@@ -31,7 +31,7 @@ func NewTcpClient(cfg *config.Config) (*TcpClient, error) {
 		return nil, err
 	}
 
-	tun, err := tun.NewLinuxTun(tname, mtu)
+	tun, err := tun.NewLinuxTun(tname, cfg.Tun, mtu)
 	if err != nil {
 		return nil, err
 	}

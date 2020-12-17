@@ -5,13 +5,13 @@ import (
 	"net"
 	"time"
 
+	"github.com/gitcfly/tunnet/config"
+	"github.com/gitcfly/tunnet/encrypt"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/protocol"
+	"github.com/gitcfly/tunnet/tun"
+	"github.com/gitcfly/tunnet/util"
 	"github.com/xitongsys/ethernet-go/header"
-	"github.com/xitongsys/pangolin/config"
-	"github.com/xitongsys/pangolin/encrypt"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/protocol"
-	"github.com/xitongsys/pangolin/tun"
-	"github.com/xitongsys/pangolin/util"
 	"github.com/xitongsys/ptcp/ptcp"
 )
 
@@ -19,7 +19,7 @@ type PTcpClient struct {
 	ServerAdd string
 	Cfg       *config.Config
 	PTcpConn  net.Conn
-	TunConn   tun.Tun
+	TunConn   *tun.Tun
 }
 
 func getPTcpAddr(addr string) string {
@@ -35,7 +35,7 @@ func NewPTcpClient(cfg *config.Config) (*PTcpClient, error) {
 		return nil, err
 	}
 
-	tun, err := tun.NewLinuxTun(tname, mtu)
+	tun, err := tun.NewLinuxTun(tname, cfg.Tun, mtu)
 	if err != nil {
 		return nil, err
 	}

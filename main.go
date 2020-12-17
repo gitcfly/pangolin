@@ -5,14 +5,14 @@ import (
 	"os"
 	"sync"
 
-	"github.com/xitongsys/pangolin/client"
-	"github.com/xitongsys/pangolin/config"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/server"
+	"github.com/gitcfly/tunnet/client"
+	"github.com/gitcfly/tunnet/config"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/server"
 )
 
 var configFile = flag.String("c", "cfg.json", "")
-var logLevel = flag.String("l", "info", "")
+var logLevel = flag.String("l", "debug", "")
 
 func main() {
 	var err error

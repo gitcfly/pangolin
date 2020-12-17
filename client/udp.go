@@ -3,16 +3,16 @@ package client
 import (
 	"net"
 
+	"github.com/gitcfly/tunnet/config"
+	"github.com/gitcfly/tunnet/logging"
+	"github.com/gitcfly/tunnet/tun"
 	"github.com/xitongsys/ethernet-go/header"
-	"github.com/xitongsys/pangolin/config"
-	"github.com/xitongsys/pangolin/logging"
-	"github.com/xitongsys/pangolin/tun"
 )
 
 type UdpClient struct {
 	ServerAdd string
 	UdpConn   net.Conn
-	TunConn   tun.Tun
+	TunConn   *tun.Tun
 }
 
 func NewUdpClient(cfg *config.Config) (*UdpClient, error) {
@@ -21,7 +21,7 @@ func NewUdpClient(cfg *config.Config) (*UdpClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	tun, err := tun.NewLinuxTun(tname, mtu)
+	tun, err := tun.NewLinuxTun(tname, cfg.Tun, mtu)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +49,7 @@ func (uc *UdpClient) readFromServer() error {
 	data := make([]byte, uc.TunConn.GetMtu()*2)
 	for {
 		if n, err := uc.UdpConn.Read(data); err == nil && n > 0 {
+			logging.Log.Debug("Received data from Udp server")
 			if protocol, src, dst, err := header.GetBase(data[:n]); err == nil {
 				uc.TunConn.Write(data[:n])
 				logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)

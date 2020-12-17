@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 
+	"github.com/gitcfly/tunnet/config"
 	"github.com/xitongsys/ethernet-go/header"
-	"github.com/xitongsys/pangolin/config"
 )
 
 type Dhcp struct {
