@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	"net"
 
 	"github.com/gitcfly/tunnet/encrypt"
@@ -20,8 +21,8 @@ type User struct {
 	LocalTunIp    string
 	Token         string
 	Key           string
-	TunToConnChan chan string
-	ConnToTunChan chan string
+	TunToConnChan chan []byte
+	ConnToTunChan chan []byte
 	Conn          net.Conn
 	Logout        func(client string)
 }
@@ -35,15 +36,15 @@ func NewUser(client string, protocol string, tun string, token string, conn net.
 		RemoteTunIp:   tun,
 		Token:         token,
 		Key:           key,
-		TunToConnChan: make(chan string, USERCHANBUFFERSIZE),
-		ConnToTunChan: make(chan string, USERCHANBUFFERSIZE),
+		TunToConnChan: make(chan []byte, USERCHANBUFFERSIZE),
+		ConnToTunChan: make(chan []byte, USERCHANBUFFERSIZE),
 		Conn:          conn,
 		Logout:        logout,
 	}
 }
 
 func (user *User) Start() {
-	encryptKey := encrypt.GetAESKey([]byte(user.Token))
+	//encryptKey := encrypt.GetAESKey([]byte(user.Token))
 	//read from client, write to channel
 	buf := make([]byte, READBUFFERSIZE)
 	go func() {
@@ -66,22 +67,29 @@ func (user *User) Start() {
 					data = buf[:n]
 				}
 			}
-
+			logging.Log.Debugf("From %v read data,len=%v", user.Client, len(data))
 			if err != nil {
+				if err != io.EOF {
+					logging.Log.Errorf("From %v, err:%v", user.Client, err)
+					continue
+				}
 				user.Close()
+				logging.Log.Errorf("From %v, err:%v", user.Client, err)
 				return
 			}
 
 			if ln := len(data); ln > 0 {
-				if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
-					if proto, src, dst, err := header.GetBase(data); err == nil {
-						remoteIp, _ := header.ParseAddr(src)
-						user.RemoteTunIp = remoteIp
-						Snat(data, user.LocalTunIp)
-						user.ConnToTunChan <- string(data)
-						logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, proto, ln, src, dst)
-					}
+				//if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
+				if proto, src, dst, err := header.GetBase(data); err == nil {
+					remoteIp, _ := header.ParseAddr(src)
+					user.RemoteTunIp = remoteIp
+					Snat(data, user.LocalTunIp)
+					user.ConnToTunChan <- data
+					logging.Log.Debugf("From %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, proto, ln, src, dst)
+				} else {
+					logging.Log.Errorf("From %v, src=%v, dest=%v, err:%v", user.Client, src, dst, err)
 				}
+				//}
 			}
 		}
 	}()
@@ -94,28 +102,28 @@ func (user *User) Start() {
 				user.Close()
 				return
 			}
-			data := []byte(datas)
+			data := datas
 			if ln := len(data); ln > 0 {
 				if proto, src, dst, err := header.GetBase(data); err == nil {
 					Dnat(data, user.RemoteTunIp)
-					if endata, err := encrypt.EncryptAES(data, encryptKey); err == nil {
-						if user.Protocol == "tcp" {
-							_, err = util.WritePacket(user.Conn, endata)
+					//if endata, err := encrypt.EncryptAES(data, encryptKey); err == nil {
+					if user.Protocol == "tcp" {
+						_, err = util.WritePacket(user.Conn, data)
 
-						} else if user.Protocol == "ptcp" {
-							packet := append([]byte{protocol.PTCP_PACKETTYPE_DATA}, endata...)
-							_, err = user.Conn.Write(packet)
+					} else if user.Protocol == "ptcp" {
+						packet := append([]byte{protocol.PTCP_PACKETTYPE_DATA}, data...)
+						_, err = user.Conn.Write(packet)
 
-						} else {
-							_, err = user.Conn.Write(endata)
-						}
-
-						if err != nil {
-							user.Close()
-							return
-						}
-						logging.Log.Debugf("To %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, proto, ln, src, dst)
+					} else {
+						_, err = user.Conn.Write(data)
 					}
+
+					if err != nil {
+						user.Close()
+						return
+					}
+					logging.Log.Debugf("To %v client: client:%v, protocol:%v, len:%v, src:%v, dst:%v", user.Protocol, user.Client, proto, ln, src, dst)
+					//}
 				}
 			}
 		}

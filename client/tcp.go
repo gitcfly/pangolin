@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/gitcfly/tunnet/config"
-	"github.com/gitcfly/tunnet/encrypt"
 	"github.com/gitcfly/tunnet/logging"
 	"github.com/gitcfly/tunnet/tun"
 	"github.com/gitcfly/tunnet/util"
@@ -45,30 +44,30 @@ func NewTcpClient(cfg *config.Config) (*TcpClient, error) {
 }
 
 func (tc *TcpClient) writeToServer() {
-	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
+	//encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
 	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
 			if protocol, src, dst, err := header.GetBase(data); err == nil {
-				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
-					util.WritePacket(tc.TcpConn, endata)
-					logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
-				}
+				//if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
+				util.WritePacket(tc.TcpConn, data[:n])
+				logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, n, src, dst)
+				//}
 			}
 		}
 	}
 }
 
 func (tc *TcpClient) readFromServer() error {
-	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
+	//encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
 	for {
 		if data, err := util.ReadPacket(tc.TcpConn); err == nil {
-			if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
-				if protocol, src, dst, err := header.GetBase(data); err == nil {
-					tc.TunConn.Write(data)
-					logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
-				}
+			//if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
+				tc.TunConn.Write(data)
+				logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
 			}
+			//}
 		}
 	}
 }

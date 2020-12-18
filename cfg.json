@@ -1,10 +1,10 @@
 {
   "role": "server",
   "server": ":9999",
-  "tun": "192.168.2.1/24",
+  "tun": "10.0.0.1/8",
   "tunname": "tun0",
   "ptcpinterface": "eth0",
-  "dns": "8.8.8.8",
+  "dns": "114.114.114.114",
   "mtu": 1400,
   "protocol": "tcp",
   "tokens": [

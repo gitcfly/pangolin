@@ -17,8 +17,8 @@ type UdpServer struct {
 	Addr          string
 	UdpConn       *net.UDPConn
 	LoginManager  *LoginManager
-	TunToConnChan chan string
-	ConnToTunChan chan string
+	TunToConnChan chan []byte
+	ConnToTunChan chan []byte
 	RouteMap      *cache.Cache
 }
 
@@ -38,8 +38,8 @@ func NewUdpServer(cfg *config.Config, loginManager *LoginManager) (*UdpServer, e
 		Addr:          addr,
 		UdpConn:       conn,
 		LoginManager:  loginManager,
-		TunToConnChan: make(chan string, UDPCHANBUFFERSIZE),
-		ConnToTunChan: make(chan string, UDPCHANBUFFERSIZE),
+		TunToConnChan: make(chan []byte, UDPCHANBUFFERSIZE),
+		ConnToTunChan: make(chan []byte, UDPCHANBUFFERSIZE),
 		RouteMap:      cache.NewCache(time.Minute * 10),
 	}, nil
 }
@@ -60,7 +60,7 @@ func (us *UdpServer) Start() error {
 				if protocol, src, dst, err := header.GetBase(data[:n]); err == nil {
 					key := protocol + ":" + src + ":" + dst
 					us.RouteMap.Put(key, caddr.String())
-					us.ConnToTunChan <- string(data[:n])
+					us.ConnToTunChan <- data[:n]
 					logging.Log.Debugf("UdpFromClient: client:%v, protocol:%v, src:%v, dst:%v", caddr, protocol, src, dst)
 				}
 			}
@@ -77,13 +77,13 @@ func (us *UdpServer) Start() error {
 		for {
 			data, ok := <-us.TunToConnChan
 			if ok {
-				if protocol, src, dst, err := header.GetBase([]byte(data)); err == nil {
+				if protocol, src, dst, err := header.GetBase(data); err == nil {
 					key := protocol + ":" + dst + ":" + src
 					clientAddrI := us.RouteMap.Get(key)
 					if clientAddrI != nil {
 						clientAddr := clientAddrI.(string)
 						if add, err := net.ResolveUDPAddr("udp", clientAddr); err == nil {
-							us.UdpConn.WriteToUDP([]byte(data), add)
+							us.UdpConn.WriteToUDP(data, add)
 							logging.Log.Debugf("UdpToClient: client:%v, protocol:%v, src:%v, dst:%v", clientAddr, protocol, src, dst)
 						}
 					}

@@ -60,6 +60,7 @@ func (ts *TcpServer) login(client string, conn net.Conn) error {
 		return err
 
 	} else {
+		logging.Log.Infof("New connected client: %v,token: %v", client, string(data))
 		return ts.LoginManager.Login(client, "tcp", string(data))
 	}
 }

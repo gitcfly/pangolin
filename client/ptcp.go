@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gitcfly/tunnet/config"
-	"github.com/gitcfly/tunnet/encrypt"
 	"github.com/gitcfly/tunnet/logging"
 	"github.com/gitcfly/tunnet/protocol"
 	"github.com/gitcfly/tunnet/tun"
@@ -49,33 +48,33 @@ func NewPTcpClient(cfg *config.Config) (*PTcpClient, error) {
 }
 
 func (tc *PTcpClient) writeToServer() {
-	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
+	//encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
 	data := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
 		if n, err := tc.TunConn.Read(data); err == nil && n > 0 {
 			if proto, src, dst, err := header.GetBase(data); err == nil {
-				if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
-					packet := append([]byte{protocol.PTCP_PACKETTYPE_DATA}, endata...)
-					tc.PTcpConn.Write(packet)
-					logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", proto, n, src, dst)
-				}
+				//if endata, err := encrypt.EncryptAES(data[:n], encryptKey); err == nil {
+				packet := append([]byte{protocol.PTCP_PACKETTYPE_DATA}, data[:n]...)
+				tc.PTcpConn.Write(packet)
+				logging.Log.Debugf("ToServer: protocol:%v, len:%v, src:%v, dst:%v", proto, n, src, dst)
+				//}
 			}
 		}
 	}
 }
 
 func (tc *PTcpClient) readFromServer() error {
-	encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
+	//encryptKey := encrypt.GetAESKey([]byte(tc.Cfg.Tokens[0]))
 	buf := make([]byte, tc.TunConn.GetMtu()*2)
 	for {
 		if n, err := tc.PTcpConn.Read(buf); err == nil && n > 1 && buf[0] == protocol.PTCP_PACKETTYPE_DATA {
 			data := buf[1:n]
-			if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
-				if protocol, src, dst, err := header.GetBase(data); err == nil {
-					tc.TunConn.Write(data)
-					logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
-				}
+			//if data, err = encrypt.DecryptAES(data, encryptKey); err == nil {
+			if protocol, src, dst, err := header.GetBase(data); err == nil {
+				tc.TunConn.Write(data)
+				logging.Log.Debugf("FromServer: protocol:%v, len:%v, src:%v, dst:%v", protocol, len(data), src, dst)
 			}
+			//}
 		}
 	}
 }

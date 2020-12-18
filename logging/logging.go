@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"github.com/keepeye/logrus-filename"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,6 +14,7 @@ func init() {
 	Log.SetFormatter(formatter)
 	Log.SetReportCaller(false)
 	Log.SetLevel(logrus.InfoLevel)
+	Log.AddHook(filename.NewHook())
 }
 
 func SetLevel(level string) {
